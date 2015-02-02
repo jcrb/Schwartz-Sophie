@@ -1,0 +1,16 @@
+---
+title: "Test"
+author: "JcB"
+date: "02/02/2015"
+output: html_document
+---
+
+Test du questionnaire
+=====================
+
+```{r test}
+path <- ""
+file <- "tableur mémoire.csv"
+d <- read.csv(file)
+```
+
