@@ -1,0 +1,149 @@
+---
+title: "Comparaison des accouchements"
+author: "Sophie Schwartz - JCB"
+date: "Monday, February 16, 2015"
+output:
+  html_document:
+    fig_caption: yes
+    number_sections: yes
+    toc: yes
+  pdf_document:
+    toc: yes
+  word_document: default
+---
+
+Mémoire de fin d'étude
+======================
+
+« Existe-t-il une différence de prise en charge du travail et de l'accouchement des femmes à bas risque obstétrical, entre une maternité de niveau I et une maternité de niveau III ? »
+
+étude quantitative rétrospective
+
+Saisie et correction des données
+================================
+
+Les données sont saisies dans un classeur excel comprenant 3 onglets:
+
+- données du CH Thann (niveau III)
+- données du CH Mulhouse (niveau I)
+- dictionnaire des termes
+
+Modifications apportées
+-----------------------
+
+- ajout d'une colonne __mat__ pour caractériser l'origine des données: mat = {"THAN", "MULH"}.
+- la feuille Mulhouse comporte une colonne sans nom, appelée X (col.81). Remplacée par _mat_. Une donnée est perdue (reprise au bloc).
+- la colonne __expect__ est appelée __expec__ dans la feuille Mulhouse. Correction pour harmoniser les nom..
+- la première colonne __N°__ est renommée __No__.
+
+```{r, comment=""}
+path <- "../"
+file1 <- paste0(path, "Data/tableur mémoire 6 THANN.csv")
+file2 <- paste0(path, "Data/tableur mémoire 6 MUL.csv")
+than <- read.csv2(file1)
+
+# rename col n°
+n <- names(than)
+n[1] <- "no"
+names(than) <- n
+than$mat <- "THANN"
+
+mul <- read.csv2(file2)
+# rename colonne X de mul:
+n <- names(mul)
+n[81] <- "mat"
+n[13] <- "expect"
+n[1] <- "no"
+names(mul) <- n
+mul$mat <- "MULH"
+
+# fusion: le dataframe acc combine les données de Thann et Mulhouse
+acc <- rbind(than, mul)
+
+# enlever les espaces inutile
+
+# correction de la variable acc$rupt_mb
+levels(acc$rupt_mb) # erreur = PSMW, corrigé en RSMW
+levels(acc$rupt_mb)[4] <- "RSMW"
+# correction de la variable position_w
+levels(acc$position_w)
+levels(acc$position_w)[2] <- "oui"
+
+# Résumé des données tableur
+names(acc)
+str(acc)
+
+# transformation en facteurs
+acc$mat <- as.factor(acc$mat)
+acc$instru <- as.factor(acc$instru)
+acc$indic_inst <- as.factor(acc$indic_inst)
+acc$mat <- as.factor(acc$mat)
+
+# transformation en nombre
+acc$dil_adm <- as.numeric(acc$dil_adm)
+
+```
+
+Ages des parturientes
+---------------------
+
+```{r age, echo=FALSE, comment=""}
+summary(acc$age)
+```
+
+Existe t-il une différence d'age entre les 2 maternités ?
+
+```{r age2, echo=FALSE, , comment=""}
+t.test(age ~ mat, data = acc)
+
+boxplot(age ~ mat, data = acc, ylab = "Age", main = "Ages des parturientes", col = "yellow")
+
+```
+IMC Calculé
+-----------
+
+Distribution proche de la "normale". 3 patientes ont un poids extrème (d'un point de vue statistique). Voir le boxplot. Pas dedifférence entre Thann et Mulhouse.
+
+```{r imc, echo=FALSE, comment=""}
+summary(acc$imc_calc)
+hist(acc$imc_calc, main = "Histogramme des IMC à terme", ylab = "Fréquence", xlab = "IMC")
+
+boxplot(imc_calc ~ mat, data = acc)
+t.test(imc_calc ~ mat, data = acc)
+
+```
+
+Relation taille - poids
+------------------------
+```{r taille_poids, echo=FALSE, comment=""}
+col <- c("red", "blue")
+plot(taille ~ poids_at, data = acc, col = col[mat], ylab = "Taille (cm)", xlab = "Poids (kg)", main = "Relation taille - poids", pch = 19)
+legend("bottomright", legend = levels(acc$mat), col = col, bty = "n", pch = 19, cex = 0.75)
+
+a <- lm(taille ~ poids_at, data = acc)
+abline(a) # droite de régression
+
+summary(a)
+
+```
+Prise de poids pendant la grossesse
+-----------------------------------
+
+```{r ppd}
+summary(acc$ppd)
+hist(acc$ppd)
+
+# calcul du poids avant grossesse
+pd_initial <- acc$poids_at - acc$ppd
+summary(pd_initial) # il y a des poids bizarres
+
+```
+Dilatation du col à l'admission
+-------------------------------
+```{r dil_col, echo=FALSE, comment=""}
+summary(acc$dil_adm)
+hist(acc$dil_adm, main = "Dilatation du col à l'admission", xlab = "Dilatation (cm)")
+
+```
+
+
