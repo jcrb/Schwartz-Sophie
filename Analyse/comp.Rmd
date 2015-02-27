@@ -68,6 +68,13 @@ levels(acc$rupt_mb)[4] <- "RSMW"
 # correction de la variable position_w
 levels(acc$position_w)
 levels(acc$position_w)[2] <- "oui"
+# correction accouchement 2832 durée ouverture de l'oeuf. Ce n'est pas 7283 minutes mais 743.
+acc[acc$nacct == 2832, "tps_oeuf"]
+acc[acc$nacct == 2832, "tps_oeuf"] <- 743
+# accouchement 312 de Thann. Ce n'est pas 3 SA mais 39
+acc[acc$nacct == 312, "terme"]
+acc[acc$nacct == 312, "terme"] <- 39
+
 
 # Résumé des données tableur
 names(acc)
@@ -97,6 +104,31 @@ Existe t-il une différence d'age entre les 2 maternités ?
 t.test(age ~ mat, data = acc)
 
 boxplot(age ~ mat, data = acc, ylab = "Age", main = "Ages des parturientes", col = "yellow")
+
+x <- seq(15, 40, length = 500)
+plot(x, dnorm(x, 27.9, 4.54), type = "l", xlab = "Ages (années)", ylab = "Fréquence", col = "red")
+lines(x, dnorm(x, 28.47, 4.38), type = "l", xlab = "Ages (années)", ylab = "Fréquence", col = "blue")
+abline(v =  27.9, lty = 2, col = "red")
+abline(v =  28.47, lty = 2, col = "blue")
+
+m <- tapply(acc$age, acc$mat, mean)
+sd <- tapply(acc$age, acc$mat, sd)
+
+# courbe normale pour MUHL avec IC à 95%
+sd.inf  <- m[1] - 1.96 * sd[1]
+sd.sup  <- m[1] + 1.96 * sd[1]
+plot(x, dnorm(x, 27.9, 4.54), type = "l", xlab = "Ages (années)", ylab = "Fréquence", col = "red")
+lines(c(27.9, 27.9), c(0, dnorm(27.9,  27.9, 4.54)), lty = 2, col = "red")
+lines(c(sd.inf, sd.inf), c(0, dnorm(sd.inf,  27.9, 4.54)), lty = 2, col = "red")
+lines(c(sd.sup, sd.sup), c(0, dnorm(sd.sup,  27.9, 4.54)), lty = 2, col = "red")
+
+# demos
+pop <- rnorm(100, 27.9, 4.54)
+mat <- c(rep(50, "MUL"), rep(50, "TAN"))
+mat <- c(rep("MUL", 50), rep("TAN", 50))
+p <- data.frame(mat, pop)
+tapply(p$pop, p$mat, mean)
+t.test(pop ~ mat, data = p, var.equal = TRUE)
 
 ```
 IMC Calculé
@@ -142,8 +174,28 @@ Dilatation du col à l'admission
 -------------------------------
 ```{r dil_col, echo=FALSE, comment=""}
 summary(acc$dil_adm)
-hist(acc$dil_adm, main = "Dilatation du col à l'admission", xlab = "Dilatation (cm)")
+# histogramme
 
+hist(acc$dil_adm, ylab = "Fréquence", main = "Histogramme de la dilatation cervicale à l'admission",xlab = "Dilatation cervicale à l'admission (en centimètres)", col = "green")
+t.test(dil_adm ~ mat, data = acc)
+
+boxplot(dil_adm ~ mat, data = acc, main = "Dilatation cervicale à l'admission", ylab = "Dilatation cervicale à l'admission", col = "yellow")
 ```
 
+Durée entre la dilatation complète et les efforts expulsifs
 
+======================
+
+```{r duree_dc_ee, echo=FALSE, comment=""}
+
+summary(acc$dur_dc_ee)
+
+# histogramme
+
+hist(acc$duree_dc_ee, ylab = "Fréquence", main = "Histogramme de la durée entre DC et EE",xlab = "durée (en minutes)", col = "green")
+
+t.test(duree_dc_ee ~ mat, data = acc)
+
+boxplot(duree_dc_ee ~ mat, data = acc, main = "Durée entre DC et EE", ylab = "Age", col = "yellow")
+
+```
