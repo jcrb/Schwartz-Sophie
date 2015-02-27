@@ -124,7 +124,7 @@ lines(c(sd.sup, sd.sup), c(0, dnorm(sd.sup,  27.9, 4.54)), lty = 2, col = "red")
 
 # demos
 pop <- rnorm(100, 27.9, 4.54)
-mat <- c(rep(50, "MUL"), rep(50, "TAN"))
+
 mat <- c(rep("MUL", 50), rep("TAN", 50))
 p <- data.frame(mat, pop)
 tapply(p$pop, p$mat, mean)
@@ -192,10 +192,10 @@ summary(acc$dur_dc_ee)
 
 # histogramme
 
-hist(acc$duree_dc_ee, ylab = "Fréquence", main = "Histogramme de la durée entre DC et EE",xlab = "durée (en minutes)", col = "green")
+hist(acc$dur_dc_ee, ylab = "Fréquence", breaks = 16, main = "Histogramme de la durée entre DC et EE",xlab = "durée (en minutes)", col = "green")
 
-t.test(duree_dc_ee ~ mat, data = acc)
+t.test(dur_dc_ee ~ mat, data = acc)
 
-boxplot(duree_dc_ee ~ mat, data = acc, main = "Durée entre DC et EE", ylab = "Age", col = "yellow")
+boxplot(dur_dc_ee ~ mat, data = acc, main = "Durée entre DC et EE", ylab = "Age", col = "yellow")
 
 ```
