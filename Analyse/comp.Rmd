@@ -199,3 +199,98 @@ t.test(dur_dc_ee ~ mat, data = acc)
 boxplot(dur_dc_ee ~ mat, data = acc, main = "Durée entre DC et EE", ylab = "Age", col = "yellow")
 
 ```
+
+PH du sang du cordon
+====================
+
+1. l'instruction summary(acc$ph_cordon) indique une valeur aberrante: max = 7042.000
+
+L'instruction suivante permet de repérer l'enregistrement fautif:
+
+acc[acc$ph_cordon == 7042 & !is.na(acc$ph_cordon), "nacct"]
+[1] 2793
+
+l'erreur se trouve dans l'accouchement n° 2793 dans la colonne ph_cordon.
+```{r ph_corrige, echo=FALSE}
+acc[92, 'ph_cordon'] <- 7.042
+```
+2. Pour créer une nouvelle colonne dans le tableau acc, rien de plus facile. Supposons que l'on souhaite appeler la nouvelle colonne Hplus:
+
+acc$Hplus <- NA
+
+crée une colonne de NA appelée Hplus (on peut remplacer NA par n'importe quoi)
+
+Pour transformer un pH en ion H+, on utilise la formule H+ = 10-pH 
+et on multiplie le résultat par 109 pour avoir le résultat en nanomoles (en R le terme puissance se traduit par ^)
+
+acc$Hplus <- 10^-acc$ph_cordon * 10^9
+
+NB opération inverse: ph = -log10(Hplus * 10^-9)
+
+crée une colonne supplémentaire appelée Hplus et contenant la concentration en hydrogène du sang du cordon (exprimée en nanomoles d'ions H+). L'avantage est que cette valeur est décimale (et non logarithmique comme le pH) et qu'on peut lui appliquer les tests usuels: moyenne, écart-type, test-t, etc.
+```{r ph_en_h, echo=FALSE}
+acc$Hplus <- 10^-acc$ph_cordon * 10^9
+```
+
+Comparaison des maternités
+```{r mat_ph, echo=FALSE}
+t.test(Hplus ~ mat, data = acc)
+
+```
+
+l est habituel de fournir une moyenne avec son intervalle de confiance à 95%. Avec R on peut utiliser la formule suivante:
+t.test(x)$conf.int où x est le vecteur des valeurs. Par ex. pour le pH:
+
+> t.test(acc$Hplus)$conf.int
+[1] 50.73295 56.02918
+attr(,"conf.level")
+[1] 0.95
+
+L'intervalle de confance de la moyenne des ions H+ est 50.73295 - 56.02918 ou en unité pH: 7.29 - 7.25 (en utilisant la formule ph = -log10(Hplus * 10^-9) directement dans R).
+
+Utilisation de l'ocytocine
+==========================
+
+Pour les données qualitatives dichotomiques, on analyse de petits tableaux à 2 lignes et 2 colonnes. Par exemple pour l'utilisation de l'ocytocine:
+
+> t <- table(acc$po, acc$mat)
+> t
+
+      MULH THANN
+  non   23    35
+  oui   29     9
+
+ou sous forme de pourcentages:
+
+> prop.table(t)
+    
+           MULH     THANN
+  non 0.2395833 0.3645833
+  oui 0.3020833 0.0937500
+
+et avec l'instruction
+
+> addmargins(t)
+    
+      MULH THANN Sum
+  non   23    35  58
+  oui   29     9  38
+  Sum   52    44  96
+
+On voit de suite que Mulhouse utilise plus souvent l'ocytocine que Thann. On le confirme par le test exact de Fisher:
+> fisher.test(t)
+
+    Fisher's Exact Test for Count Data
+
+data:  t
+p-value = 0.000704
+alternative hypothesis: true odds ratio is not equal to 1
+95 percent confidence interval:
+ 0.07229048 0.55072288
+sample estimates:
+odds ratio
+ 0.2075821
+
+La différence de comportement est fortement significative. Ce test introduit la notion d'odds ratio très utilisée en épidémiologie.
+
+
